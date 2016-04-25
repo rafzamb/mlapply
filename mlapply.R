@@ -9,7 +9,10 @@ mlapply <- function(FUN, ...)
     expand.grid(stringsAsFactors=FALSE, KEEP.OUT.ATTRS=FALSE) %>%
     split(nrow(.) %>% seq_len) %>%
     lapply(function(x)
-        do.call(FUN, x %>% unlist %>% as.list))
+        x %>%
+            lapply(function(x)
+                if (x %>% is.list) x[[1]] else x) %>%
+            do.call(FUN, .))
 
 # example:
 # mlapply(function(x,y,z) data.frame(x,y,z, sum = x + y + z, row.names="row1"),
