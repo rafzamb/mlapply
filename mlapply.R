@@ -1,9 +1,9 @@
 library(magrittr)
 
 # A more efficient implementation avoiding
-# expand.grid (which copies the parameters/arguments multiple times,
-# which is inefficient for large parameters, e.g. data.frames).
-mapply <- function(.Fun, ..., .Cluster=NULL) {
+# expand.grid which copies the parameters/arguments multiple times,
+# which is inefficient for large parameters (e.g. data.frames).
+mapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
     `--List--` <-
         list(...)
     `--metadata--` <-
@@ -11,8 +11,6 @@ mapply <- function(.Fun, ..., .Cluster=NULL) {
                    `--Len--` = lengths(`--List--`),
                    check.names=FALSE) %>% 
         `[`(order(.$`--Len--`),)
-    `--env--` <-
-        environment()
     eval(Reduce(function(previous,x)
         paste0('unlist(lapply(`--List--`$',x,',',
                'function(',x,')', previous,'),recursive=FALSE)'),
@@ -20,16 +18,22 @@ mapply <- function(.Fun, ..., .Cluster=NULL) {
         init =
             paste0(`--metadata--`$`--Name--`,'=',`--metadata--`$`--Name--`) %>%
             paste(collapse=",") %>%
-            paste0('list(.Fun(',.,'))')) %>%
+            paste0('list(.Fun(',.,'))')) %>% 
+            sub('lapply(',
+                ifelse(.Cluster %>% is.null,
+                       'lapply(',
+                       '.parFun(.Cluster,'),
+                ., fixed=TRUE) %>% 
             parse(text=.))
 }
 
-# Example:
+
+# # Example:
 # 
 # RESULT <-
-#     mapp(function(x,y,z)
-#         data.frame(x,y,z, sum = x + y + z, row.names="row1"),
-#         x = 1, y = 1:2, z = 1:3)
+#     mapply(function(x,y,z)
+#            data.frame(x,y,z, sum = x + y + z, row.names="row1"),
+#            x = 1, y = 1:2, z = 1:3)
 # 
 # str(RESULT)
 # 
@@ -64,3 +68,26 @@ mapply <- function(.Fun, ..., .Cluster=NULL) {
 # #    ..$ y  : int 2
 # #    ..$ z  : int 3
 # #    ..$ sum: num 6
+
+
+# # Example of using parallel lapply:
+# 
+# cl <- parallel::makeCluster(parallel::detectCores())
+# 
+# RESULT_FROM_PARALLEL_1 <-
+#     mapply(function(x,y,z)
+#         data.frame(x,y,z, sum = x + y + z, row.names="row1"),
+#         x = 1, y = 1:2, z = 1:3,
+#         .Cluster=cl)
+# 
+# identical(RESULT,
+#           RESULT_FROM_PARALLEL_1)
+# 
+# #    [1] TRUE
+# 
+# RESULT_FROM_PARALLEL_2 <- # load-balancing version:
+#     mapply(function(x,y,z)
+#         data.frame(x,y,z, sum = x + y + z, row.names="row1"),
+#         x = 1, y = 1:2, z = 1:3,
+#         .Cluster=cl,
+#         .parFun=parallel::parLapplyLB)
