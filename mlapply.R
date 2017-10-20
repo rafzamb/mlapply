@@ -3,7 +3,7 @@ library(magrittr)
 # A more efficient implementation avoiding
 # expand.grid which copies the parameters/arguments multiple times,
 # which is inefficient for large parameters (e.g. data.frames).
-mapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
+mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
     `--List--` <-
         list(...)
     `--metadata--` <-
@@ -31,7 +31,7 @@ mapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
 # # Example:
 # 
 # RESULT <-
-#     mapply(function(x,y,z)
+#     mlapply(function(x,y,z)
 #            data.frame(x,y,z, sum = x + y + z, row.names="row1"),
 #            x = 1, y = 1:2, z = 1:3)
 # 
@@ -75,7 +75,7 @@ mapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
 # cl <- parallel::makeCluster(parallel::detectCores())
 # 
 # RESULT_FROM_PARALLEL_1 <-
-#     mapply(function(x,y,z)
+#     mlapply(function(x,y,z)
 #         data.frame(x,y,z, sum = x + y + z, row.names="row1"),
 #         x = 1, y = 1:2, z = 1:3,
 #         .Cluster=cl)
@@ -86,7 +86,7 @@ mapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
 # #    [1] TRUE
 # 
 # RESULT_FROM_PARALLEL_2 <- # load-balancing version:
-#     mapply(function(x,y,z)
+#     mlapply(function(x,y,z)
 #         data.frame(x,y,z, sum = x + y + z, row.names="row1"),
 #         x = 1, y = 1:2, z = 1:3,
 #         .Cluster=cl,
