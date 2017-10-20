@@ -1,43 +1,66 @@
 library(magrittr)
-mlapply <- function(FUN, ...)
-    # mapply for all combinations of arguments
-    # or lapply for multiple vectors/lists of arguments
-    # for cases where mapply warns that
-    # "longer argument not a multiple of length of shorter"
-    # Returns a list of all evaluations of FUN.
-    list(...) %>%
-    expand.grid(stringsAsFactors=FALSE, KEEP.OUT.ATTRS=FALSE) %>%
-    split(nrow(.) %>% seq_len) %>%
-    lapply(function(x)
-        x %>%
-            lapply(function(x)
-                if (x %>% is.list) x[[1]] else x) %>%
-            do.call(FUN, .))
 
-# example:
-# mlapply(function(x,y,z) data.frame(x,y,z, sum = x + y + z, row.names="row1"),
+# A more efficient implementation avoiding
+# expand.grid (which copies the parameters/arguments multiple times,
+# which is inefficient for large parameters, e.g. data.frames).
+mapply <- function(.Fun, ..., .Cluster=NULL) {
+    `--List--` <-
+        list(...)
+    `--metadata--` <-
+        data.frame(`--Name--` = paste0("`",names(`--List--`),"`"),
+                   `--Len--` = lengths(`--List--`),
+                   check.names=FALSE) %>% 
+        `[`(order(.$`--Len--`),)
+    `--env--` <-
+        environment()
+    eval(Reduce(function(previous,x)
+        paste0('unlist(lapply(`--List--`$',x,',',
+               'function(',x,')', previous,'),recursive=FALSE)'),
+        x=`--metadata--`$`--Name--`,
+        init =
+            paste0(`--metadata--`$`--Name--`,'=',`--metadata--`$`--Name--`) %>%
+            paste(collapse=",") %>%
+            paste0('list(.Fun(',.,'))')) %>%
+            parse(text=.))
+}
+
+# Example:
+# 
+# RESULT <-
+#     mapp(function(x,y,z)
+#         data.frame(x,y,z, sum = x + y + z, row.names="row1"),
 #         x = 1, y = 1:2, z = 1:3)
-#
-#>  $`1`
-#>       x y z sum
-#>  row1 1 1 1   3
-#>  
-#>  $`2`
-#>       x y z sum
-#>  row1 1 2 1   4
-#>  
-#>  $`3`
-#>       x y z sum
-#>  row1 1 1 2   4
-#>  
-#>  $`4`
-#>       x y z sum
-#>  row1 1 2 2   5
-#>  
-#>  $`5`
-#>       x y z sum
-#>  row1 1 1 3   5
-#>  
-#>  $`6`
-#>       x y z sum
-#>  row1 1 2 3   6
+# 
+# str(RESULT)
+# 
+# #    List of 6
+# #    $ :'data.frame':	1 obs. of  4 variables:
+# #        ..$ x  : num 1
+# #    ..$ y  : int 1
+# #    ..$ z  : int 1
+# #    ..$ sum: num 3
+# #    $ :'data.frame':	1 obs. of  4 variables:
+# #        ..$ x  : num 1
+# #    ..$ y  : int 2
+# #    ..$ z  : int 1
+# #    ..$ sum: num 4
+# #    $ :'data.frame':	1 obs. of  4 variables:
+# #        ..$ x  : num 1
+# #    ..$ y  : int 1
+# #    ..$ z  : int 2
+# #    ..$ sum: num 4
+# #    $ :'data.frame':	1 obs. of  4 variables:
+# #        ..$ x  : num 1
+# #    ..$ y  : int 2
+# #    ..$ z  : int 2
+# #    ..$ sum: num 5
+# #    $ :'data.frame':	1 obs. of  4 variables:
+# #        ..$ x  : num 1
+# #    ..$ y  : int 1
+# #    ..$ z  : int 3
+# #    ..$ sum: num 5
+# #    $ :'data.frame':	1 obs. of  4 variables:
+# #        ..$ x  : num 1
+# #    ..$ y  : int 2
+# #    ..$ z  : int 3
+# #    ..$ sum: num 6
