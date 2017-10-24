@@ -6,6 +6,12 @@ library(magrittr)
 mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
     `--List--` <-
         list(...)
+    `--Names--` <-
+        names(`--List--`)
+    names(`--List--`) <-
+        ifelse(`--Names--`=="",
+               formatC(runif(length(`--Names--`))*1e8, digits=0, format='f', width=9, flag='0'),
+               `--Names--`)
     `--metadata--` <-
         data.frame(`--Name--` = paste0("`",names(`--List--`),"`"),
                    `--Len--` = lengths(`--List--`),
