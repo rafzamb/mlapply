@@ -13,7 +13,7 @@ mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
                formatC(runif(length(`--Names--`))*1e8, digits=0, format='f', width=9, flag='0'),
                `--Names--`)
     `--metadata--` <-
-        data.frame(`--Name--` = paste0("`",names(`--List--`),"`"),
+        data.frame(`--Name--` = paste0("`",`--Names--`,"`"),
                    `--Len--` = lengths(`--List--`),
                    check.names=FALSE) %>% 
         `[`(order(.$`--Len--`),)
