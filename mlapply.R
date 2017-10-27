@@ -6,8 +6,6 @@ library(magrittr)
 mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
   `--List--` <-
     list(...)
-  `--Names--` <-
-    names(`--List--`)
   names(`--List--`) <-
     names(`--List--`) %>% 
     `if`(is.null(.),
