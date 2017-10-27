@@ -4,35 +4,45 @@ library(magrittr)
 # expand.grid which copies the parameters/arguments multiple times,
 # which is inefficient for large parameters (e.g. data.frames).
 mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
-    `--List--` <-
-        list(...)
-    `--Names--` <-
-        names(`--List--`)
-    names(`--List--`) <-
-        ifelse(`--Names--`=="",
-               formatC(runif(length(`--Names--`))*1e8, digits=0, format='f', width=9, flag='0'),
-               `--Names--`)
-    `--metadata--` <-
-        data.frame(`--Name--` = paste0("`",`--Names--`,"`"),
-                   `--Len--` = lengths(`--List--`),
-                   check.names=FALSE) %>% 
-        `[`(order(.$`--Len--`),)
-    eval(Reduce(function(previous,x)
-        paste0('unlist(lapply(`--List--`$',x,',',
-               'function(',x,')', previous,'),recursive=FALSE)'),
-        x=`--metadata--`$`--Name--`,
-        init =
-            paste0(`--metadata--`$`--Name--`,'=',`--metadata--`$`--Name--`) %>%
-            paste(collapse=",") %>%
-            paste0('list(.Fun(',.,'))')) %>% 
-            sub('lapply(',
-                ifelse(.Cluster %>% is.null,
-                       'lapply(',
-                       '.parFun(.Cluster,'),
-                ., fixed=TRUE) %>% 
-            parse(text=.))
+  `--List--` <-
+    list(...)
+  `--Names--` <-
+    names(`--List--`)
+  names(`--List--`) <-
+    `--Names--` %>% 
+    `if`(is.null(.),
+         rep.int("", length(`--List--`)),
+         .) %>% 
+    ifelse(.=="", # for unnamed args in ...
+           formatC(runif(length(.))*1e8,
+                   digits=0, format='f', width=9, flag='0'),
+           .) %>% 
+    make.unique # to be sure
+  `--metadata--` <-
+    data.frame(Name = paste0("`",names(`--List--`),"`"),
+               Len = lengths(`--List--`),
+               OriginalOrder = seq_len(length(`--List--`)),
+               stringsAsFactors=FALSE)
+  eval(Reduce(function(previous,x)
+    paste0('unlist(lapply(`--List--`$',x,',',
+           'function(',x,')', previous,'),recursive=FALSE)'),
+    x =
+      `--metadata--` %>% 
+      `[`(order(.$Len),) %>% 
+      `$`(Name),
+    init =
+      `--metadata--` %>% 
+      `[`(order(.$OriginalOrder),) %>% 
+      {paste0(.$Name,'=',.$Name)} %>%
+      paste(collapse=',') %>%
+      paste0('list(.Fun(',.,'))')) %>% 
+      ifelse(.Cluster %>% is.null,
+             .,
+             sub('lapply(',
+                 '.parFun(.Cluster,',
+                 ., fixed=TRUE)) %>% 
+      parse(text=.))
 }
-
 
 # # Example:
 # 
