@@ -9,7 +9,7 @@ mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
   `--Names--` <-
     names(`--List--`)
   names(`--List--`) <-
-    `--Names--` %>% 
+    names(`--List--`) %>% 
     `if`(is.null(.),
          rep.int("", length(`--List--`)),
          .) %>% 
