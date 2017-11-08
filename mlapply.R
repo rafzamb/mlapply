@@ -56,7 +56,7 @@ mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
 # 
 # str(RESULT)
 # 
-# #    List of 6
+# #   List of 6
 # #    $ :'data.frame':	1 obs. of  4 variables:
 # #        ..$ x  : num 1
 # #    ..$ y  : int 1
