@@ -38,7 +38,7 @@ mlapply <- function(.Fun, ..., .Cluster=NULL, .parFun=parallel::parLapply) {
             ifelse(grepl("argument in mlapply's ...",.,fixed=TRUE),
                    ., paste0(.,'=',.)) %>% 
             paste(collapse=',') %>%
-            paste0('list(.Fun(',.,'))')) %>% print %>% 
+            paste0('list(.Fun(',.,'))')) %>% 
             ifelse(.Cluster %>% is.null,
                    .,
                    sub('lapply(',
